@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -8,8 +9,10 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SingalRDemo.Hubs;
 
 namespace SingalRDemo
 {
@@ -26,6 +29,18 @@ namespace SingalRDemo
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddSignalR();
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.WithOrigins("http://127.0.0.1:5500/", "https://localhost:44352/")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            //.AllowAnyOrigin()
+                            .AllowCredentials();
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -38,13 +53,23 @@ namespace SingalRDemo
 
             app.UseHttpsRedirection();
 
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                                Path.Combine(env.ContentRootPath, "Pages")),
+                RequestPath = "/Pages"
+            });
+
             app.UseRouting();
 
             app.UseAuthorization();
 
+            app.UseCors();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<ChatHub>("/chatHub");
             });
         }
     }

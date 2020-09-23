@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-alpha1/css/bootstrap.css' />
+
+<body>
+
+
+    <div>姓名<input type="text" name="name"></div>
+    <div>會議室名稱<input type="text" name="groupName"> </div>
+    <div>
+        <button id="addGroup">加入會議室</button>
+        <button id="leaveGroup">離開會議室</button></div>
+    <div></div>
+    <div>訊息<textarea type="text" name="message"></textarea></div>
+    <div>
+        <button id="send">送出</button>
+    </div>
+    <div id="messages">
+        <il>
+
+        </il>
+    </div>
+
+
+
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-alpha1/js/bootstrap.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.8/signalr.js'></script>
+    <script>
+        //連線
+        document.getElementById("send").disabled = true;
+        var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44352/chatHub").build();
+
+        //從server回應訊息
+        connection.on("ReceiveMessage", function(user, message) {
+            var messageTag = document.querySelector('#messages > il')
+            var messageLi = document.createElement('li')
+            messageLi.innerText = `User:${user},Message:${message}`
+            messageTag.appendChild(messageLi)
+        })
+        connection.start().then(function() {
+            document.getElementById("send").disabled = false;
+        }).catch(function(err) {
+            return console.error(err.toString());
+        });
+
+
+        //傳送訊息
+        document.querySelector('#send').addEventListener('click', function(e) {
+            var name = document.querySelector('input[name=name]')
+            var message = document.querySelector('textarea[name=message]')
+            var groupName = document.querySelector('input[name=groupName]')
+            connection.invoke('SendMessage', name.value, groupName.value, message.value)
+        })
+
+        //加入 會議室
+        document.querySelector('#addGroup').addEventListener('click', function(e) {
+            var name = document.querySelector('input[name=name]')
+            var groupName = document.querySelector('input[name=groupName]')
+            var leaveBtn = document.querySelector('#leaveGroup')
+            try {
+
+                connection.invoke('AddGroup', name.value, groupName.value)
+            } catch (ex) {
+                console.log(ex)
+            }
+
+            name.disabled = true
+            groupName.disabled = true
+            leaveBtn.disabled = false
+            this.disabled = true
+
+        })
+
+        //離開 會議室
+        document.querySelector('#leaveGroup').addEventListener('click', function(e) {
+            var name = document.querySelector('input[name=name]')
+            var groupName = document.querySelector('input[name=groupName]')
+            var addBtn = document.querySelector('#addGroup')
+            try {
+                connection.invoke('LeaveGroup', name.value, groupName.value)
+            } catch (ex) {
+                console.log(ex)
+            }
+
+            name.disabled = false
+            groupName.disabled = false
+            addBtn.disabled = false
+            this.disabled = true
+        })
+
+        //加入/離開 會議室時傳送訊息
+        connection.on('send', function(message) {
+            var messageTag = document.querySelector('#messages > il')
+            var messageLi = document.createElement('li')
+            messageLi.innerText = `${message}`
+            messageTag.appendChild(messageLi)
+        })
+    </script>
+</body>
+
+</html>
