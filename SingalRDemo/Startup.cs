@@ -34,11 +34,12 @@ namespace SingalRDemo
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.WithOrigins("http://127.0.0.1:5500/", "https://localhost:44352/")
-                            .AllowAnyHeader()
-                            .AllowAnyMethod()
-                            //.AllowAnyOrigin()
-                            .AllowCredentials();
+                    options.AddPolicy("CorsPolicy",
+                        builder => builder
+                                .SetIsOriginAllowed(x => true)
+                                .AllowCredentials()
+                                .AllowAnyMethod()
+                                .AllowAnyHeader()); ;
                 });
             });
         }
@@ -64,7 +65,7 @@ namespace SingalRDemo
 
             app.UseAuthorization();
 
-            app.UseCors();
+            app.UseCors("CorsPolicy");
 
             app.UseEndpoints(endpoints =>
             {
