@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+
+<body>
+    <div>商品：<input type="text" name="productId" value="1" /></div>
+    <div>可購買數量：<span id="total"></span></div>
+    <div>數量：<input type="text" name="quantity" value="" /></div>
+    <button id="buy">下單</button>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-alpha1/js/bootstrap.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.8/signalr.js'></script>
+    <script>
+        //連線
+        document.querySelector('#buy').disabled = true
+        var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44352/ShopingHub").build();
+
+        //啟動
+        connection.start().then(x => {
+            console.log('---start--')
+            var productId = document.querySelector('input[name=productId]')
+            var quantity = document.querySelector('input[name=quantity]')
+            document.querySelector('#buy').disabled = false
+            connection.invoke('GetCount', productId.value)
+        });
+
+        connection.on('setCount', function(productId, remaining) {
+            var quantity = document.querySelector('input[name=quantity]')
+            document.querySelector('#total').innerText = remaining
+            if (remaining <= 0) {
+                quantity.disabled = true
+                document.querySelector('#buy').disabled = true
+            }
+        })
+
+        //下單
+        document.querySelector('#buy').addEventListener('click', function(e) {
+            console.log('--buy--')
+            var productId = document.querySelector('input[name=productId]')
+            var quantity = document.querySelector('input[name=quantity]')
+            connection.invoke('Buy', productId.value, quantity.value)
+        })
+
+        //剩於數量
+        connection.on('bought', function(productId, remaining) {
+            var quantity = document.querySelector('input[name=quantity]')
+            var total = document.querySelector('#total')
+            total.innerText = remaining
+            console.log('remaining=>', remaining)
+            if (remaining <= 0) {
+                quantity.disabled = true
+                document.querySelector('#buy').disabled = true
+            }
+        })
+    </script>
+</body>
+
+</html>

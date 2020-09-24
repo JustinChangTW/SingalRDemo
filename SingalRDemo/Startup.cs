@@ -71,6 +71,7 @@ namespace SingalRDemo
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/chatHub");
+                endpoints.MapHub<ShopingHub>("/ShopingHub");
             });
         }
     }
