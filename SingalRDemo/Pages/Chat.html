@@ -35,7 +35,7 @@
     <script>
         //連線
         document.getElementById("send").disabled = true;
-        var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44352/chatHub").();
+        var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44352/chatHub").build();
 
         //從server回應訊息
         connection.on("ReceiveMessage", function(user, message) {

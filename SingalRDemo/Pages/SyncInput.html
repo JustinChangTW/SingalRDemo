@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncInput</title>
+</head>
+
+<body>
+    <div><input type="text" name="id" id="id" value="1" disabled=true></div>
+    <div><button id="sync">同步</button></div>
+    <form>
+        <div>姓名：<input type="text" name="name"></div>
+        <div>性別：
+            <div class="radio">
+                <label>
+                <input type="radio" name="sex" id="sexF" value="F" checked="checked">男
+            </label>
+                <label>
+                <input type="radio" name="sex" id="sexM" value="M" checked="checked">女
+            </label>
+            </div>
+        </div>
+        <div>興趣：
+            <div class="checkbox">
+                <label>
+                <input type="checkbox" name="interest[]" value="move"> 看電影
+            </label>
+                <label>
+                <input type="checkbox" name="interest[]" value="book"> 寫書
+            </label>
+                <label>
+                <input type="checkbox" name="interest[]" value="sleep"> 睡覺
+            </label>
+            </div>
+        </div>
+        <div>語言
+            <select name="lang" id="lang">
+                <option value="">請選擇</option>
+                <option value="1">中文</option>
+                <option value="2">英文</option>
+            </select>
+        </div>
+    </form>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.8/signalr.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery.serializeJSON/3.1.0/jquery.serializejson.js'></script>
+    <script>
+        //連線
+        var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44352/SyncHub").build()
+
+        //啟動
+        connection.start().then(x => {
+            var id = Math.random().toString(36).substring(2)
+            document.querySelector("#id").value = id
+        })
+
+        document.querySelector('#sync').addEventListener('click', function(e) {
+            connection.invoke('Sync', document.querySelector("#id").value)
+        })
+
+        connection.on('synced', function(masterId) {
+            var id = document.querySelector('#id')
+            if (masterId !== id.value) {
+                document.querySelectorAll('*').forEach(x => x.disabled = true)
+            }
+        })
+
+        document.querySelectorAll('input,select').forEach(x => x.addEventListener('input', function(e) {
+            var id = document.querySelector('#id')
+            var data = $('form').serializeJSON();
+            connection.invoke('SyncToData', id.value, JSON.stringify(data))
+        }))
+
+        connection.on('dataFromSync', function(id, data) {
+            var id = document.querySelector('#id')
+            var json = JSON.parse(data)
+            Object.keys(json).forEach(key => {
+                var el = $('[name^=' + key + ']')
+                if (el[0].nodeName == "INPUT") {
+                    if (el[0].type == "text") {
+                        el[0].value = json[key]
+                    } else if (el[0].type == "radio") {
+                        el.filter('[value=' + json[key] + ']')[0].checked = true
+                    } else if (el[0].type == "checkbox") {
+                        el.each(function(x, y, z) {
+                            if (Array.isArray(json[key])) {
+                                if (json[key].indexOf(y.value) > -1) {
+                                    y.checked = true
+                                } else(
+                                    y.checked = false
+                                )
+                            }
+                        })
+                    }
+                } else if (el[0].nodeName == "SELECT") {
+                    el[0].value = json[key]
+                }
+            })
+        })
+    </script>
+</body>
+
+</html>
