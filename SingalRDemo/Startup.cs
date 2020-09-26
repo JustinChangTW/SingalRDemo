@@ -73,6 +73,7 @@ namespace SingalRDemo
                 endpoints.MapHub<ChatHub>("/chatHub");
                 endpoints.MapHub<ShopingHub>("/ShopingHub");
                 endpoints.MapHub<SyncHub>("/SyncHub");
+                endpoints.MapHub<SyncSrollHub>("/SyncSrollHub");
             });
         }
     }

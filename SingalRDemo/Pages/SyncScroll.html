@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .h-30 {
+            height: 400px;
+            border: 2px solid #aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="h-30">1不願事故在這裡應用名字要在你自己，買賣一位，休閒執行，在這。</div>
+    <div class="h-30">2不願事故在這裡應用名字要在你自己，買賣一位，休閒執行，在這。</div>
+    <div class="h-30">3不願事故在這裡應用名字要在你自己，買賣一位，休閒執行，在這。</div>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.8/signalr.js'></script>
+    <script>
+        var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44352/syncSrollHub").build();
+
+        connection.start().then(function() {
+
+        }).catch(function(err) {
+            return console.error(err.toString());
+        });
+
+        window.addEventListener('scroll', function(e) {
+            console.log('--scroll--', {
+                "scrollY": window.scrollY,
+                "scrollX": window.scrollX,
+                "pageYOffset": window.pageYOffset,
+                "pageXOffset": window.pageXOffset,
+            })
+            InvokeScroll()
+        })
+
+        connection.on('scrolled', function(scroll) {
+            console.log(scroll)
+            window.scrollTo(scroll.scrollX, scroll.scrollY)
+        })
+
+        function InvokeScroll() {
+            connection.invoke('Scroll', {
+                "scrollY": window.scrollY,
+                "scrollX": window.scrollX,
+                "pageYOffset": window.pageYOffset,
+                "pageXOffset": window.pageXOffset,
+            }).catch(x => {
+                InvokeScroll()
+            })
+        }
+    </script>
+</body>
+
+</html>
