@@ -15,9 +15,9 @@ namespace SingalRDemo.Hubs
     }
 
     public class ScrollModel{
-        public int ScrollY { get; set; }
-        public int ScrollX { get; set; }
-        public int PageYOffset { get; set; }
-        public int PageXOffset { get; set; }
+        public decimal ScrollY { get; set; }
+        public decimal ScrollX { get; set; }
+        public decimal PageYOffset { get; set; }
+        public decimal PageXOffset { get; set; }
     }
 }

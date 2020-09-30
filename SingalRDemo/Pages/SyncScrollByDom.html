@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -27,14 +27,12 @@
             return console.error(err.toString());
         });
 
-        window.addEventListener('scroll', function(e) {
-            console.log('--scroll--', {
-                "scrollY": window.scrollY,
-                "scrollX": window.scrollX,
-                "pageYOffset": window.pageYOffset,
-                "pageXOffset": window.pageXOffset,
+        var dom = document.querySelectorAll('div')
+        dom.forEach(x => {
+            x.addEventListener('click', function(e) {
+                console.log(x)
+                InvokeScroll()
             })
-            InvokeScroll()
         })
 
         connection.on('scrolled', function(scroll) {
@@ -50,9 +48,6 @@
                     "pageYOffset": window.pageYOffset,
                     "pageXOffset": window.pageXOffset,
                 })
-                // .catch(x => {
-                //     InvokeScroll()
-                //})
         }
     </script>
 </body>
