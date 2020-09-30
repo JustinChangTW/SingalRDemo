@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Client</title>
+</head>
+
+<body>
+    <div id="app">
+        <div>GroupId:{{GroupId}}</div>
+        <div>OTPKey: <input type="text" v-model="OTPKey" value=""> </div>
+        <button @click="clickOtp()">驗證</button>
+    </div>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.8/signalr.js'></script>
+    <script>
+        var vm = new Vue({
+            el: '#app',
+            data: function() {
+                return {
+                    GroupId: "",
+                    OTPKey: "",
+                    connection: {},
+                }
+            },
+            mounted: function() {
+                this.getGroupId()
+                this.connection = new signalR.HubConnectionBuilder().withUrl('https://localhost:44352/OTPHub').build();
+                this.connection.start().then(() => {
+                    console.log("connection success!!")
+                    this.connection.invoke('AddGroup', this.GroupId);
+                }).catch(function(err) {
+                    console.log("connection fail!!")
+                    console.error(err.toString());
+                });
+                this.connection.on('result-otp', x => this.resultOtp(x))
+            },
+            methods: {
+                getGroupId: function() {
+                    var url = new URL(window.location.href)
+                    this.GroupId = url.searchParams.get('groupId')
+                },
+                resultOtp: function(result) {
+                    console.log('----client----------')
+                    console.log(result)
+
+                    this.connection.invoke('ClientResult', this.GroupId, result)
+                    if (result == "true") {
+                        alert("驗證成功")
+                    } else {
+                        alert("驗證失敗")
+                    }
+                },
+                clickOtp: function() {
+                    console.log(this.OTPKey)
+                    this.connection.invoke('ClientCheck', this.GroupId, this.OTPKey)
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>

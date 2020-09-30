@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Server</title>
+</head>
+
+<body>
+    <div id="app" @check-otp="checkOTP(clientOTP)">
+        <div>OTPKey: {{OTPKey}}</div>
+        <div>GroupId: {{GroupId}}</div>
+        <div>
+            <a :href="clientUrl" target="_blank">開啟用戶端</a>
+            <qrcode :value="clientUrl"></qrcode>
+        </div>
+        <button @click="OTPKey = randomKey()">重新產生</button>
+    </div>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.js'></script>
+    <script src="js/vue-qrcode.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.8/signalr.js'></script>
+    <script>
+        Vue.component(VueQrcode.name, VueQrcode);
+        var vm = new Vue({
+            el: '#app',
+            data: function() {
+                return {
+                    GroupId: "",
+                    OTPKey: "",
+                    IsOk: false,
+                    //baseUrl: "https://localhost:44352/OTPClient.html"
+                    baseUrl: "http://127.0.0.1:5500/SingalRDemo/Pages/OTPClient.html",
+                    connection: {},
+                }
+            },
+            mounted: function() {
+                this.OTPKey = this.randomKey()
+                this.GroupId = this.randomKey()
+                this.connection = new signalR.HubConnectionBuilder().withUrl('https://localhost:44352/OTPHub').build();
+                this.connection.start().then(() => {
+                    console.log("connection success!!")
+                    this.connection.invoke('AddGroup', this.GroupId);
+                }).catch(function(err) {
+                    console.log("connection fail!!")
+                    console.error(err.toString());
+                });
+                this.connection.on('check-otp', x => this.checkOTP(x))
+                this.connection.on('client-result', x => this.clientResult(x))
+            },
+            computed: {
+                clientUrl: function() {
+                    return this.baseUrl + '?groupId=' + this.GroupId
+                }
+            },
+            methods: {
+                randomKey: function() {
+                    return Math.random().toString(10).substring(12)
+                },
+                checkOTP: function(clientOTP) {
+                    var result = clientOTP == this.OTPKey
+                    this.connection.invoke('ServerResult', this.GroupId, result.toString())
+                },
+                clientResult: function(result) {
+                    if (result == "true") {
+                        alert("客戶端已驗證成功")
+                    } else {
+                        alert("客戶端驗證失敗")
+                    }
+                },
+                alert: function() {
+                    alert('OK')
+                }
+            }
+        })
+
+        //document.addEventListener('checkOTP',function())
+    </script>
+
+</body>
+
+</html>
